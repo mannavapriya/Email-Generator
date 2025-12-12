@@ -43,9 +43,13 @@ email_assistant/
 ├── data/                   # Tone samples
 └── config/                 # MCP routing config
 
+
+---
+
 ## Usage
 
 1. Open the app (Cloud).  
 2. Select the **email tone**: formal, casual, or assertive.  
 3. Enter or speak your **email intent**.  
 4. Preview, edit, and export your **personalized email draft**.
+
