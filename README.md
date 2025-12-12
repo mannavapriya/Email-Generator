@@ -30,17 +30,18 @@ The app uses a **multi-agent system** to process user input and generate polishe
 
 ## Project Structure
 
+```text
 email_assistant/
-├── streamlit_app.py # Streamlit Cloud entrypoint
-├── requirements.txt
+├── streamlit_app.py        # Streamlit Cloud entrypoint
+├── requirements.txt        # Python dependencies
 ├── src/
-│ ├── ui/ # Streamlit UI
-│ ├── agents/ # Modular agent code
-│ ├── workflow/ # LangGraph workflow
-│ └── integrations/ # API clients
-├── memory/ # User profile JSON
-├── data/ # Tone samples
-└── config/ # MCP routing config
+│   ├── ui/                 # Streamlit UI
+│   ├── agents/             # Modular agent code
+│   ├── workflow/           # LangGraph workflow
+│   └── integrations/       # API clients
+├── memory/                 # User profile JSON
+├── data/                   # Tone samples
+└── config/                 # MCP routing config
 
 ## Usage
 
