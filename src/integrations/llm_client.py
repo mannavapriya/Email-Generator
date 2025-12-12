@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from langchain_openai import ChatOpenAI  # now from the correct package
+from langchain.chat_models import ChatOpenAI
 
 def make_openai_llm(
     model: str = "gpt-3.5-turbo",
