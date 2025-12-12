@@ -1,10 +1,8 @@
-# integrations/llm_client.py
-
 import os
 from dotenv import load_dotenv
-load_dotenv()
+from langchain.llms import OpenAI
 
-from langchain.chat_models import ChatOpenAI
+load_dotenv()
 
 def make_openai_llm(
     model: str = "gpt-3.5-turbo",
@@ -14,8 +12,8 @@ def make_openai_llm(
     if not api_key:
         raise EnvironmentError("OPENAI_API_KEY not set in environment.")
 
-    return ChatOpenAI(
-        model=model,
+    return OpenAI(
+        model_name=model,
         openai_api_key=api_key,
         temperature=temperature
     )
