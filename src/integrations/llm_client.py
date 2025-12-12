@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from langchain.llms import OpenAI
+from langchain import OpenAI  # correct import for LangChain 1.1.3
 
 load_dotenv()
 
@@ -13,7 +13,7 @@ def make_openai_llm(
         raise EnvironmentError("OPENAI_API_KEY not set in environment.")
 
     return OpenAI(
-        model_name=model,
+        model=model,
         openai_api_key=api_key,
         temperature=temperature
     )
