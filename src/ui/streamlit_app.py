@@ -34,28 +34,35 @@ def main():
         if mode == "Text":
             user_text = st.text_area("Describe intent (e.g., 'to: Alice\\nFollow-up on proposal... tone: formal')", height=200)
         else:
-            st.info("Upload a WAV file (.wav only). Whisper will transcribe it.")
+            st.info("Upload an audio or video file (WAV, MP3, M4A, MP4).")
+
             if "voice_text" not in st.session_state:
                 st.session_state["voice_text"] = ""
 
-            audio_file = st.file_uploader("Upload audio (WAV, MP3, M4A)", type=None)
+            audio_file = st.file_uploader(
+                "Upload audio/video",
+                type=["wav", "mp3", "m4a", "mp4"]
+            )
+
             if audio_file:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                # Preserve original file extension
+                suffix = "." + audio_file.name.split(".")[-1]
+
+                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
                     tmp.write(audio_file.read())
                     audio_path = tmp.name
 
-                # Transcribe using OpenAI Whisper
+                # Transcribe using OpenAI (MP4 supported natively)
                 with open(audio_path, "rb") as f:
                     response = openai.Audio.transcriptions.create(
                         file=f,
                         model="gpt-4o-transcribe",
                         language="en"
                     )
+
                 st.session_state["voice_text"] = response.text
                 st.write("Transcription:", response.text)
-
             user_text = st.session_state["voice_text"]
-
         tone_choice = st.selectbox("Tone (optional)", ["(profile)","formal","casual","assertive"], index=0)
         if st.button("Generate email"):
             if not user_text:
