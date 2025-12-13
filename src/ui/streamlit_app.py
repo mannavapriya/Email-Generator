@@ -7,7 +7,7 @@ This app is intended to be run where the OPEN AI API KEY is available.
 # Streamlit and App imports
 # ===========================
 import streamlit as st
-
+import tempfile
 from memory.json_memory import get_profile, upsert_profile
 from workflow.langgraph_flow import run_email_workflow
 
