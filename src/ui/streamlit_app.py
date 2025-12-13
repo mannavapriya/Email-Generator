@@ -38,7 +38,7 @@ def main():
             if "voice_text" not in st.session_state:
                 st.session_state["voice_text"] = ""
 
-            audio_file = st.file_uploader("Upload WAV audio", type=["wav"])
+            audio_file = st.file_uploader("Upload audio (WAV, MP3, M4A)", type=None)
             if audio_file:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
                     tmp.write(audio_file.read())
