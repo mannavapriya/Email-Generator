@@ -37,12 +37,19 @@ The app uses a **multi-agent system** to process user input and generate polishe
 
 ---
 
+## Deployment
+
+**Streamlit Cloud:** https://email-generator-agentic-ai.streamlit.app/
+
+---
+
 ## Project Structure
 
 ```text
 email_assistant/
 ├── streamlit_app.py        # Streamlit Cloud entrypoint
 ├── requirements.txt        # Python dependencies
+├── runtime.txt 
 ├── src/
 │   ├── ui/                 # Streamlit UI
 │   ├── agents/             # Modular agent code
