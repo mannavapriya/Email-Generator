@@ -7,8 +7,8 @@ This app is intended to be run where the OPEN AI API KEY is available.
 # Streamlit and App imports
 # ===========================
 import streamlit as st
-import openai
 import tempfile
+import openai
 from memory.json_memory import get_profile, upsert_profile
 from workflow.langgraph_flow import run_email_workflow
 
@@ -63,22 +63,22 @@ def main():
                     audio_path = tmp.name
 
                 # Transcribe using OpenAI Whisper
-                client = openai.OpenAI()
                 with open(audio_path, "rb") as f:
-                    response = client.audio.transcriptions.create(
-                        file=f,
-                        model="gpt-4o-transcribe",
-                        language="en",
-                        response_format="json"
+                    response = openai.Audio.transcriptions.create(
+                        model="gpt-4o-transcribe",  # or "whisper-1"
+                        file=f
                     )
-                st.session_state["voice_text"] = response.text
-                st.write("Transcription:", response.text)
+
+                st.session_state["voice_text"] = response["text"]
+                st.write("Transcription:", response["text"])
 
             user_text = st.session_state["voice_text"]
+
         tone_choice = st.selectbox("Tone (optional)", ["(profile)","formal","casual","assertive"], index=0)
+
         if st.button("Generate email"):
             if not user_text:
-                st.warning("Enter text or record voice.")
+                st.warning("Enter text or upload a voice file.")
             else:
                 extra = f"\n\ntone: {tone_choice}" if tone_choice and tone_choice != "(profile)" else ""
                 full_text = user_text + extra
