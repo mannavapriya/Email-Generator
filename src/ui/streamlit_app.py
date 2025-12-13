@@ -66,7 +66,7 @@ def main():
             )
         else:
             st.info(
-                "Upload an audio or video file (WAV, MP3, M4A, MP4). "
+                "Upload an audio file (WAV, MP3, M4A, MP4) with email intent. "
                 "The audio track will be transcribed."
             )
 
@@ -74,7 +74,7 @@ def main():
                 st.session_state["voice_text"] = ""
 
             audio_file = st.file_uploader(
-                "Upload audio/video",
+                "Upload audio",
                 type=["wav", "mp3", "m4a", "mp4"],
             )
 
