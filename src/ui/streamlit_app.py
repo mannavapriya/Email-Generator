@@ -61,7 +61,7 @@ def main():
 
         if mode == "Text":
             user_text = st.text_area(
-                "Describe intent (e.g., 'to: Alice\\nFollow-up on proposal... tone: formal')",
+                "Describe intent (e.g., 'to: Alice\\nFollow-up on meeting... tone: formal')",
                 height=200,
             )
         else:
