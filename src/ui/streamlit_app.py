@@ -127,40 +127,55 @@ def main():
         st.subheader("Draft & Actions")
 
         last = st.session_state.get("last_result")
+
+        # Always render inputs (even before generation)
         if last:
             draft = last.get("personalized_draft") or last.get("draft") or {}
-
             subject = draft.get("subject", "")
             body = draft.get("body", "")
-
-            subject_edit = st.text_input("Subject", subject)
-            body_edit = st.text_area("Body", value=body, height=400)
-
-            st.download_button(
-                "Download .txt",
-                data=f"Subject: {subject_edit}\n\n{body_edit}",
-                file_name="email_draft.txt",
-                mime="text/plain",
+            info_text = None
+        else:
+            subject = ""
+            body = ""
+            info_text = (
+                "No email generated yet.\n\n"
+                "Use the **Compose** panel on the left and click **Generate email** "
+                "to see your draft here."
             )
 
-            if st.button("Save to profile history"):
-                prof = get_profile("default")
-                prof.setdefault("sent_examples", []).append(
-                    {"subject": subject_edit, "body": body_edit}
-                )
-                upsert_profile("default", prof)
-                st.success("Saved to profile history.")
+        subject_edit = st.text_input("Subject", subject)
+        body_edit = st.text_area("Body", value=body, height=400)
 
-            if st.button("Simulate send"):
-                prof = get_profile("default")
-                prof.setdefault("sent_examples", []).append(
-                    {"subject": subject_edit, "body": body_edit}
-                )
-                upsert_profile("default", prof)
-                st.success("Email sent (simulation). Saved to profile history.")
+        if info_text:
+            st.info(info_text)
 
-    st.markdown("---")
-    st.markdown("~ Because writing emails manually is a 2010 problem. 😄")
+        st.download_button(
+            "Download .txt",
+            data=f"Subject: {subject_edit}\n\n{body_edit}",
+            file_name="email_draft.txt",
+            mime="text/plain",
+            disabled=not bool(subject_edit or body_edit),
+        )
+
+        if st.button("Save to profile history", disabled=not last):
+            prof = get_profile("default")
+            prof.setdefault("sent_examples", []).append(
+                {"subject": subject_edit, "body": body_edit}
+            )
+            upsert_profile("default", prof)
+            st.success("Saved to profile history.")
+
+        if st.button("Simulate send", disabled=not last):
+            prof = get_profile("default")
+            prof.setdefault("sent_examples", []).append(
+                {"subject": subject_edit, "body": body_edit}
+            )
+            upsert_profile("default", prof)
+            st.success("Email sent (simulation). Saved to profile history.")
+
+
+        st.markdown("---")
+        st.markdown("~ Because writing emails manually is a 2010 problem. 😄")
 
 if __name__ == "__main__":
     main()
