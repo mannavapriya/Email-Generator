@@ -20,11 +20,12 @@ def input_parser_agent(state: Dict[str, Any]) -> Dict[str, Any]:
     if not messages:
         return {"parsed": {}}
     last = messages[-1]
-    text = last.content if hasattr(last, "content") else str(last)
+    text = getattr(last, "content", str(last))
     recipient_name = None
     recipient_role = None
     preferred_tone = None
     constraints = {}
+
     m_to = re.search(r"to[:\\-]\\s*([A-Za-z .,@]+)", text, re.I)
     if m_to:
         recipient_name = m_to.group(1).strip()
@@ -34,6 +35,7 @@ def input_parser_agent(state: Dict[str, Any]) -> Dict[str, Any]:
     m_len = re.search(r"length[:\\-]\\s*(short|long|medium|\\d+\\s*words)", text, re.I)
     if m_len:
         constraints["length"] = m_len.group(1)
+
     parsed = {
         "prompt_text": text,
         "recipient_name": recipient_name,
@@ -46,9 +48,11 @@ def input_parser_agent(state: Dict[str, Any]) -> Dict[str, Any]:
 def intent_detection_agent(state: Dict[str, Any], llm) -> Dict[str, Any]:
     parsed = state.get("parsed", {})
     prompt = parsed.get("prompt_text", "")
-    system = ("You are an email intent classifier. Classify the user's intent into one of: "
-              "outreach, follow-up, apology, internal_update, ask_for_meeting, introduction, promotion, other. "
-              "Respond with only the single label.")
+    system = (
+        "You are an email intent classifier. Classify the user's intent into one of: "
+        "outreach, follow-up, apology, internal_update, ask_for_meeting, introduction, promotion, other. "
+        "Respond with only the single label."
+    )
     chat_prompt = ChatPromptTemplate.from_messages([
         ("system", system),
         ("user", "{text}")
@@ -67,7 +71,6 @@ def tone_stylist_agent(state: Dict[str, Any]) -> Dict[str, Any]:
     tone = prefer if prefer in TONE_SAMPLES else "formal"
     tone_instructions = TONE_SAMPLES.get(tone, TONE_SAMPLES["formal"])
     
-    # Add explicit examples for clarity
     examples = {
        "formal": "Example: Hi Emma,\nI hope this message finds you well. I am writing to invite you to our upcoming meeting. Please confirm your availability. Best regards, Manasa.",
        "casual": "Example: Hey Emma!\nHope you're doing well! I wanted to invite you to our Secret Santa party at my place on Friday. Let me know if you can make it! Cheers, Manasa.",
@@ -126,12 +129,11 @@ def personalization_agent(state: Dict[str, Any]) -> Dict[str, Any]:
     draft = state.get("draft", {})
     profile = state.get("user_profile", {})
     default_signature = profile.get("signature", "Best regards,")
-    sender_name = DEFAULT_SENDER_NAME  # enforce sender name
+    sender_name = DEFAULT_SENDER_NAME
 
     body = draft.get("body", "") or ""
     subject = draft.get("subject", "") or ""
 
-    # Replace placeholders
     body = (
         body.replace("{{sender_name}}", sender_name)
             .replace("{sender_name}", sender_name)
@@ -143,49 +145,21 @@ def personalization_agent(state: Dict[str, Any]) -> Dict[str, Any]:
                .replace("{sender_name}", sender_name)
     )
 
-    # ----------------------------------------
-    # CLEAN UP GREETING
-    # ----------------------------------------
-
     lines = [line.strip() for line in body.splitlines() if line.strip()]
-    if not lines:
-        return {"personalized_draft": {"subject": subject, "body": ""}}
-
-    # Detect if the model already wrote a greeting (e.g., "Dear Madhu,")
     greeting_prefixes = ("dear ", "hi ", "hello ")
-    first_line = lines[0].lower()
-
-    if first_line.startswith(greeting_prefixes):
-        # KEEP the greeting AS-IS, do not add anything
+    if lines and not lines[0].lower().startswith(greeting_prefixes):
         pass
-    else:
-        # DO NOT fabricate "Dear there," — just leave body untouched
-        pass
-
-    # ----------------------------------------
-    # REMOVE DUPLICATE SIGNATURES
-    # ----------------------------------------
 
     signature_patterns = ["best regards", "warm regards", "sincerely", "cheers"]
-
     body_lower = body.lower()
     signature_present = any(pattern in body_lower for pattern in signature_patterns)
-
-    # Only append your signature if none exists
     if not signature_present:
         body = body.strip() + f"\n\n{default_signature}\n{sender_name}"
     else:
-        # Avoid duplicate sender name blocks
-        # If a signature is already present but missing "Manasa", add it
         if sender_name.lower() not in body_lower:
             body = body.strip() + f"\n{sender_name}"
 
-    return {
-        "personalized_draft": {
-            "subject": subject.strip(),
-            "body": body.strip()
-        }
-    }
+    return {"personalized_draft": {"subject": subject.strip(), "body": body.strip()}}
 
 def review_agent(state: Dict[str, Any], llm) -> Dict[str, Any]:
     draft = state.get("personalized_draft", {})
@@ -214,15 +188,10 @@ def router_agent(state):
     retry_count = state.get("retry_count", 0)
     max_retries = 3
 
-    # No review → stop
     if not review:
         return {"route": "done"}
-
-    # Passed quality check → done
     if review.get("ok", True):
         return {"route": "done"}
-
-    # Failed quality check
     if retry_count >= max_retries:
         return {
             "route": "done",
@@ -231,10 +200,8 @@ def router_agent(state):
             "retry_count": retry_count,
         }
 
-    # Retry, go to rewrite again
     return {
         "route": "rewrite",
         "issues": review.get("issues", []),
         "retry_count": retry_count + 1,
     }
-

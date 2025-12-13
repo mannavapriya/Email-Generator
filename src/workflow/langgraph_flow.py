@@ -93,7 +93,6 @@ def node_end(state: EmailState):
 # ===========================
 workflow = StateGraph(EmailState)
 
-# Add nodes
 workflow.add_node("input_parser", node_input_parser)
 workflow.add_node("intent_detection", node_intent_detection)
 workflow.add_node("tone_stylist", node_tone_stylist)
@@ -101,9 +100,8 @@ workflow.add_node("draft_writer", node_draft_writer)
 workflow.add_node("personalization", node_personalization)
 workflow.add_node("review", node_review)
 workflow.add_node("router", node_router)
-workflow.add_node("end", node_end)  # end node must exist before routing
+workflow.add_node("end", node_end)
 
-# Linear edges
 workflow.set_entry_point("input_parser")
 workflow.add_edge("input_parser", "intent_detection")
 workflow.add_edge("intent_detection", "tone_stylist")
@@ -119,7 +117,6 @@ def router_decision(state: EmailState):
     nxt = state.get("next_agent")
     if nxt == "rewrite":
         return "draft_writer"
-    # Always return a valid node
     return "end"
 
 workflow.add_conditional_edges(
@@ -127,7 +124,7 @@ workflow.add_conditional_edges(
     router_decision,
     {
         "draft_writer": "draft_writer",
-        "end": "end"  # default exit
+        "end": "end"
     }
 )
 

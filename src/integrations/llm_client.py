@@ -2,6 +2,7 @@
 import os
 import openai
 from dotenv import load_dotenv
+
 load_dotenv()
 
 def make_openai_llm(model="gpt-3.5-turbo", temperature=0.2):
@@ -9,7 +10,6 @@ def make_openai_llm(model="gpt-3.5-turbo", temperature=0.2):
     if not api_key:
         raise EnvironmentError("OPENAI_API_KEY not set in environment.")
     
-    # return a simple wrapper object
     class OpenAIWrapper:
         def __init__(self, model, temperature, api_key):
             self.model = model
