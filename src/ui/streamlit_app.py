@@ -49,31 +49,31 @@ def main():
         if mode == "Text":
             user_text = st.text_area("Describe intent (e.g., 'to: Alice\\nFollow-up on proposal... tone: formal')", height=200)
         else:
-            st.info("Speak normally. Your voice will be transcribed using Whisper (high accuracy).")
-            import sounddevice as sd
-            from scipy.io.wavfile import write
-            import tempfile
+            st.info("Upload a voice file (.wav or .mp3). It will be transcribed using Whisper.")
+
             import openai
-            
-            # Persist text across rerun
+            from pydub import AudioSegment
+            import tempfile
+
             if "voice_text" not in st.session_state:
                 st.session_state["voice_text"] = ""
-        
-            sample_rate = 16000
-        
-            if st.button("Record voice (10s)"):
-                st.write("Recording…")
-                audio = sd.rec(int(10 * sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
-                sd.wait()
-        
-                # Save to temp .wav
+
+            audio_file = st.file_uploader("Upload audio", type=["wav", "mp3", "m4a"])
+            if audio_file:
+                # Save to temp file
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-                    write(tmp.name, sample_rate, audio)
+                    tmp.write(audio_file.read())
                     audio_path = tmp.name
-        
+
+                # Optional: convert to WAV using pydub if not already
+                if not audio_path.endswith(".wav"):
+                    sound = AudioSegment.from_file(audio_path)
+                    audio_path_wav = audio_path + ".wav"
+                    sound.export(audio_path_wav, format="wav")
+                    audio_path = audio_path_wav
+
+                # Transcribe using OpenAI Whisper
                 client = openai.OpenAI()
-        
-                # Whisper transcription
                 with open(audio_path, "rb") as f:
                     response = client.audio.transcriptions.create(
                         file=f,
@@ -81,10 +81,9 @@ def main():
                         language="en",
                         response_format="json"
                     )
-        
                 st.session_state["voice_text"] = response.text
                 st.write("Transcription:", response.text)
-        
+
             user_text = st.session_state["voice_text"]
         tone_choice = st.selectbox("Tone (optional)", ["(profile)","formal","casual","assertive"], index=0)
         if st.button("Generate email"):
