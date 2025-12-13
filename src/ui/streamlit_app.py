@@ -49,28 +49,17 @@ def main():
         if mode == "Text":
             user_text = st.text_area("Describe intent (e.g., 'to: Alice\\nFollow-up on proposal... tone: formal')", height=200)
         else:
-            st.info("Upload a voice file (.wav or .mp3). It will be transcribed using Whisper.")
-
-            import openai
-            from pydub import AudioSegment
-            import tempfile
+            st.info("Upload a voice file (.wav, .mp3, or .m4a). It will be transcribed using Whisper.")
 
             if "voice_text" not in st.session_state:
                 st.session_state["voice_text"] = ""
 
             audio_file = st.file_uploader("Upload audio", type=["wav", "mp3", "m4a"])
             if audio_file:
-                # Save to temp file
+                # Save uploaded file to a temp file
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
                     tmp.write(audio_file.read())
                     audio_path = tmp.name
-
-                # Optional: convert to WAV using pydub if not already
-                if not audio_path.endswith(".wav"):
-                    sound = AudioSegment.from_file(audio_path)
-                    audio_path_wav = audio_path + ".wav"
-                    sound.export(audio_path_wav, format="wav")
-                    audio_path = audio_path_wav
 
                 # Transcribe using OpenAI Whisper
                 client = openai.OpenAI()
