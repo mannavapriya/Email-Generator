@@ -174,8 +174,8 @@ def main():
             st.success("Email sent (simulation). Saved to profile history.")
 
 
-        st.markdown("---")
-        st.markdown("~ Because writing emails manually is a 2010 problem. 😄")
+    st.markdown("---")
+    st.markdown("~ Because writing emails manually is a 2010 problem. 😄")
 
 if __name__ == "__main__":
     main()
