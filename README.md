@@ -39,7 +39,7 @@ The app uses a **multi-agent system** to process user input and generate polishe
 
 ## Example Intents
 
-# 1) Professional Follow-Up After a Meeting
+### 1) Professional Follow-Up After a Meeting
 Draft a polished and comprehensive follow-up email to a senior stakeholder after a 45-minute product strategy meeting.
 The email should:
 Thank the recipient for their time and insights
@@ -48,7 +48,7 @@ Clearly outline next steps, owners, and tentative timelines
 Be concise but thorough, suitable for an executive audience
 Assume the sender is a product or engineering lead and the recipient expects clarity, accountability, and alignment.
 
-# 2) Assertive Tone : Action Required / Deadline Enforcement
+### 2) Assertive Tone : Action Required / Deadline Enforcement
 Generate a email requesting immediate action on an overdue deliverable.
 The email should:
 State the issue and expectation in the opening sentence
@@ -58,7 +58,7 @@ Reinforce accountability and urgency without being hostile
 End with a firm call to action and next steps
 Assume the recipient is responsible for the deliverable and resolution is time-sensitive.
 
-# 3) Casual / Friendly: Secret Santa & Christmas Party Invitation
+### 3) Casual / Friendly: Secret Santa & Christmas Party Invitation
 Write a email inviting my friend to participate in a Secret Santa exchange and attend a Christmas party.
 The email should:
 Open with a warm, informal greeting that reflects a close friendship
