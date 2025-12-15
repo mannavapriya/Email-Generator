@@ -10,10 +10,11 @@ def main():
     st.set_page_config(page_title="Email Generator", layout="wide")
     st.title("Email Generator")
 
+    # -------------------------
     # Sidebar: User Profile
+    # -------------------------
     st.sidebar.header("User Profile")
     profile = get_profile("default")
-
     name = st.sidebar.text_input(
         "Sender name",
         value=profile.get("name", "Manasa"),
@@ -40,15 +41,13 @@ def main():
         )
         st.sidebar.success("Saved.")
 
+    # -------------------------
     # Main layout
+    # -------------------------
     col1, col2 = st.columns([2, 3])
 
-    # -------------------------
-    # Compose column
-    # -------------------------
     with col1:
         st.subheader("Compose")
-
         mode = st.radio("Input mode", ["Text", "Voice"], index=0)
         user_text = ""
 
@@ -59,7 +58,6 @@ def main():
             )
         else:
             st.info("Upload an audio file (WAV, MP3, M4A, MP4).")
-
             if "voice_text" not in st.session_state:
                 st.session_state["voice_text"] = ""
 
@@ -67,7 +65,6 @@ def main():
                 "Upload audio",
                 type=["wav", "mp3", "m4a", "mp4"],
             )
-
             if audio_file:
                 suffix = "." + audio_file.name.split(".")[-1]
                 with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
@@ -81,7 +78,6 @@ def main():
                         model="gpt-4o-transcribe",
                         language="en",
                     )
-
                 st.session_state["voice_text"] = getattr(transcript, "text", "")
                 st.write("Transcription:")
                 st.write(st.session_state["voice_text"])
@@ -105,7 +101,7 @@ def main():
                 )
                 full_text = user_text + extra
 
-                st.info("Generating email...")
+                st.info("Generating draft...")
 
                 # Run workflow (NO tracer, NO secrets)
                 result = run_email_workflow(full_text)
@@ -113,23 +109,20 @@ def main():
 
                 # ---- TRACE DISPLAY ONLY ----
                 st.subheader("Execution Trace")
-
                 if result and "flow" in result:
                     for step in result["flow"]:
                         agent = step.get("agent", "unknown_agent")
                         output = step.get("output", {})
-
                         st.markdown(f"### {agent}")
                         st.json(output)
                 else:
                     st.info("No trace returned from workflow.")
 
     # -------------------------
-    # Draft column
+    # Draft & Actions Column
     # -------------------------
     with col2:
         st.subheader("Draft & Actions")
-
         last = st.session_state.get("last_result")
 
         if last:
