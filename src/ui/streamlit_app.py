@@ -1,50 +1,27 @@
 import streamlit as st
 import tempfile
 from openai import OpenAI
-import os
 
 from memory.json_memory import get_profile, upsert_profile
 from workflow.langgraph_flow import run_email_workflow
 
-# ---------------------------
-# LangSmith environment
-# ---------------------------
-os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
-os.environ["LANGSMITH_API_KEY"] = st.secrets["LANGSMITH_API_KEY"]
-os.environ["LANGSMITH_PROJECT"] = st.secrets["LANGSMITH_PROJECT"]
-os.environ["LANGSMITH_TRACING"] = str(st.secrets.get("LANGSMITH_TRACING", "true")).lower()
-os.environ["LANGSMITH_ENDPOINT"] = st.secrets.get(
-    "LANGSMITH_ENDPOINT", "https://api.smith.langchain.com"
-)
-
-from langsmith import Client
-client = Client()
 
 def main():
     st.set_page_config(page_title="Email Generator", layout="wide")
     st.title("Email Generator")
 
-    # Initialize OpenAI client (NEW API – REQUIRED)
-    openai_client = OpenAI()
+    # Initialize OpenAI client
+    client = OpenAI()
 
-    # ---------------------------
+    # ─────────────────────────────────────────────
     # Sidebar: User Profile
-    # ---------------------------
+    # ─────────────────────────────────────────────
     st.sidebar.header("User Profile")
     profile = get_profile("default")
 
-    name = st.sidebar.text_input(
-        "Sender name",
-        value=profile.get("name", "Manasa")
-    )
-    company = st.sidebar.text_input(
-        "Company",
-        value=profile.get("company", "Stealth Startup")
-    )
-    signature = st.sidebar.text_area(
-        "Signature",
-        value=profile.get("signature", "Best,\nManasa")
-    )
+    name = st.sidebar.text_input("Sender name", value=profile.get("name", "Manasa"))
+    company = st.sidebar.text_input("Company", value=profile.get("company", "Stealth Startup"))
+    signature = st.sidebar.text_area("Signature", value=profile.get("signature", "Best,\nManasa"))
 
     if st.sidebar.button("Save profile"):
         upsert_profile(
@@ -59,14 +36,14 @@ def main():
         )
         st.sidebar.success("Saved.")
 
-    # ---------------------------
+    # ─────────────────────────────────────────────
     # Main Layout
-    # ---------------------------
+    # ─────────────────────────────────────────────
     col1, col2 = st.columns([2, 3])
 
-    # ---------------------------
+    # ─────────────────────────────────────────────
     # Compose Column
-    # ---------------------------
+    # ─────────────────────────────────────────────
     with col1:
         st.subheader("Compose")
 
@@ -87,22 +64,16 @@ def main():
             if "voice_text" not in st.session_state:
                 st.session_state["voice_text"] = ""
 
-            audio_file = st.file_uploader(
-                "Upload audio",
-                type=["wav", "mp3", "m4a", "mp4"],
-            )
+            audio_file = st.file_uploader("Upload audio", type=["wav", "mp3", "m4a", "mp4"])
 
             if audio_file:
-                # Preserve original file extension
                 suffix = "." + audio_file.name.split(".")[-1]
-
                 with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
                     tmp.write(audio_file.read())
                     audio_path = tmp.name
 
-                # Transcription using NEW OpenAI API
                 with open(audio_path, "rb") as f:
-                    transcript = openai_client.audio.transcriptions.create(
+                    transcript = client.audio.transcriptions.create(
                         file=f,
                         model="gpt-4o-transcribe",
                         language="en",
@@ -130,28 +101,24 @@ def main():
                 )
                 full_text = user_text + extra
 
-                # Container for showing agent-by-agent outputs
+                # Placeholder for live trace
                 trace_container = st.empty()
 
-                with st.spinner("Generating draft..."):
-                    # Provide a callback to show per-agent outputs
-                    def on_step(agent_name, output):
-                        trace_container.markdown(f"### {agent_name}")
-                        trace_container.json(output)
+                def on_step(agent_name, output):
+                    trace_container.markdown(f"### {agent_name}")
+                    trace_container.json(output)
 
+                with st.spinner("Generating draft..."):
                     result = run_email_workflow(full_text, on_step=on_step)
                     st.session_state["last_result"] = result
 
-                st.success("Draft generated. Trace should appear in LangSmith dashboard.")
-
-    # ---------------------------
+    # ─────────────────────────────────────────────
     # Draft & Actions Column
-    # ---------------------------
+    # ─────────────────────────────────────────────
     with col2:
         st.subheader("Draft & Actions")
 
         last = st.session_state.get("last_result")
-
         if last:
             draft = last.get("personalized_draft") or last.get("draft") or {}
             subject = draft.get("subject", "")
@@ -182,17 +149,13 @@ def main():
 
         if st.button("Save to profile history", disabled=not last):
             prof = get_profile("default")
-            prof.setdefault("sent_examples", []).append(
-                {"subject": subject_edit, "body": body_edit}
-            )
+            prof.setdefault("sent_examples", []).append({"subject": subject_edit, "body": body_edit})
             upsert_profile("default", prof)
             st.success("Saved to profile history.")
 
         if st.button("Simulate send", disabled=not last):
             prof = get_profile("default")
-            prof.setdefault("sent_examples", []).append(
-                {"subject": subject_edit, "body": body_edit}
-            )
+            prof.setdefault("sent_examples", []).append({"subject": subject_edit, "body": body_edit})
             upsert_profile("default", prof)
             st.success("Email sent (simulation). Saved to profile history.")
 
