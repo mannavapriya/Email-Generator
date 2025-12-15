@@ -3,7 +3,7 @@ import tempfile
 import streamlit as st
 from memory.json_memory import get_profile, upsert_profile
 from workflow.langgraph_flow import run_email_workflow
-from llm_client import make_openai_llm
+from integrations.llm_client import make_openai_llm
 
 # Updated LangSmithTracer import for current LangChain
 from langchain_experimental.langsmith import LangSmithTracer
