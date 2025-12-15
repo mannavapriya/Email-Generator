@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Streamlit app for Email Assistant with internal trace.
-All code is wrapped in main() to allow imports safely.
+Streamlit app for Email Assistant with live agent trace.
+Shows only the currently executing agent's output.
 """
 
 import os
@@ -21,18 +21,9 @@ def main():
     # -------------------------
     st.sidebar.header("User Profile")
     profile = get_profile("default")
-    name = st.sidebar.text_input(
-        "Sender name",
-        value=profile.get("name", "Manasa"),
-    )
-    company = st.sidebar.text_input(
-        "Company",
-        value=profile.get("company", "Stealth Startup"),
-    )
-    signature = st.sidebar.text_area(
-        "Signature",
-        value=profile.get("signature", "Best,\nManasa"),
-    )
+    name = st.sidebar.text_input("Sender name", value=profile.get("name", "Manasa"))
+    company = st.sidebar.text_input("Company", value=profile.get("company", "Stealth Startup"))
+    signature = st.sidebar.text_area("Signature", value=profile.get("signature", "Best,\nManasa"))
 
     if st.sidebar.button("Save profile"):
         upsert_profile(
@@ -67,10 +58,7 @@ def main():
             if "voice_text" not in st.session_state:
                 st.session_state["voice_text"] = ""
 
-            audio_file = st.file_uploader(
-                "Upload audio",
-                type=["wav", "mp3", "m4a", "mp4"],
-            )
+            audio_file = st.file_uploader("Upload audio", type=["wav", "mp3", "m4a", "mp4"])
             if audio_file:
                 suffix = "." + audio_file.name.split(".")[-1]
                 with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
@@ -90,39 +78,44 @@ def main():
 
             user_text = st.session_state["voice_text"]
 
-        tone_choice = st.selectbox(
-            "Tone (optional)",
-            ["(profile)", "formal", "casual", "assertive"],
-            index=0,
-        )
+        tone_choice = st.selectbox("Tone (optional)", ["(profile)", "formal", "casual", "assertive"], index=0)
 
         if st.button("Generate email"):
             if not user_text:
                 st.warning("Enter text or upload voice input.")
             else:
-                extra = (
-                    f"\n\ntone: {tone_choice}"
-                    if tone_choice != "(profile)"
-                    else ""
-                )
+                extra = f"\n\ntone: {tone_choice}" if tone_choice != "(profile)" else ""
                 full_text = user_text + extra
 
                 st.info("Generating draft...")
 
-                # Run workflow (no external tracer)
-                result = run_email_workflow(full_text)
-                st.session_state["last_result"] = result
+                # Placeholder for live trace
+                trace_placeholder = st.empty()
 
-                # ---- TRACE DISPLAY ONLY ----
-                st.subheader("Execution Trace")
-                if result and "flow" in result:
-                    for step in result["flow"]:
-                        agent = step.get("agent", "unknown_agent")
-                        output = step.get("output", {})
-                        st.markdown(f"### {agent}")
-                        st.json(output)
-                else:
-                    st.info("No trace returned from workflow.")
+                # Run workflow manually to show live trace
+                state = {"messages": [{"content": full_text}], "flow": []}
+                agents = run_email_workflow.__defaults__[0] if hasattr(run_email_workflow, "__defaults__") else None
+
+                # Using the agents defined inside run_email_workflow
+                agents = [
+                    ("input_parser_agent", lambda s: run_email_workflow.__globals__["input_parser_agent"](s)),
+                    ("intent_detection_agent", lambda s: run_email_workflow.__globals__["intent_detection_agent"](s, llm=run_email_workflow.__globals__["make_openai_llm"]())),
+                    ("tone_stylist_agent", lambda s: run_email_workflow.__globals__["tone_stylist_agent"](s)),
+                    ("draft_writer_agent", lambda s: run_email_workflow.__globals__["draft_writer_agent"](s, llm=run_email_workflow.__globals__["make_openai_llm"]())),
+                    ("personalization_agent", lambda s: run_email_workflow.__globals__["personalization_agent"](s)),
+                    ("review_agent", lambda s: run_email_workflow.__globals__["review_agent"](s, llm=run_email_workflow.__globals__["make_openai_llm"]())),
+                    ("router_agent", lambda s: run_email_workflow.__globals__["router_agent"](s))
+                ]
+
+                for name, fn in agents:
+                    output = fn(state)
+                    state.update(output)
+                    state["flow"].append({"agent": name, "output": output})
+                    # Update only the current agent
+                    trace_placeholder.markdown(f"### {name}")
+                    trace_placeholder.json(output)
+
+                st.session_state["last_result"] = state
 
     # -------------------------
     # Draft & Actions Column
@@ -153,17 +146,13 @@ def main():
 
         if st.button("Save to profile history", disabled=not last):
             prof = get_profile("default")
-            prof.setdefault("sent_examples", []).append(
-                {"subject": subject_edit, "body": body_edit}
-            )
+            prof.setdefault("sent_examples", []).append({"subject": subject_edit, "body": body_edit})
             upsert_profile("default", prof)
             st.success("Saved.")
 
         if st.button("Simulate send", disabled=not last):
             prof = get_profile("default")
-            prof.setdefault("sent_examples", []).append(
-                {"subject": subject_edit, "body": body_edit}
-            )
+            prof.setdefault("sent_examples", []).append({"subject": subject_edit, "body": body_edit})
             upsert_profile("default", prof)
             st.success("Email sent (simulation).")
 
