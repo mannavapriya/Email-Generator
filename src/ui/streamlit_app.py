@@ -1,21 +1,35 @@
 import streamlit as st
 import tempfile
 from openai import OpenAI
+import os
 
 from memory.json_memory import get_profile, upsert_profile
 from workflow.langgraph_flow import run_email_workflow
 
+# ---------------------------
+# LangSmith environment
+# ---------------------------
+os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+os.environ["LANGSMITH_API_KEY"] = st.secrets["LANGSMITH_API_KEY"]
+os.environ["LANGSMITH_PROJECT"] = st.secrets["LANGSMITH_PROJECT"]
+os.environ["LANGSMITH_TRACING"] = str(st.secrets.get("LANGSMITH_TRACING", "true")).lower()
+os.environ["LANGSMITH_ENDPOINT"] = st.secrets.get(
+    "LANGSMITH_ENDPOINT", "https://api.smith.langchain.com"
+)
+
+from langsmith import Client
+client = Client()
 
 def main():
     st.set_page_config(page_title="Email Generator", layout="wide")
     st.title("Email Generator")
 
     # Initialize OpenAI client (NEW API – REQUIRED)
-    client = OpenAI()
+    openai_client = OpenAI()
 
-    # ─────────────────────────────────────────────
+    # ---------------------------
     # Sidebar: User Profile
-    # ─────────────────────────────────────────────
+    # ---------------------------
     st.sidebar.header("User Profile")
     profile = get_profile("default")
 
@@ -45,14 +59,14 @@ def main():
         )
         st.sidebar.success("Saved.")
 
-    # ─────────────────────────────────────────────
+    # ---------------------------
     # Main Layout
-    # ─────────────────────────────────────────────
+    # ---------------------------
     col1, col2 = st.columns([2, 3])
 
-    # ─────────────────────────────────────────────
+    # ---------------------------
     # Compose Column
-    # ─────────────────────────────────────────────
+    # ---------------------------
     with col1:
         st.subheader("Compose")
 
@@ -88,7 +102,7 @@ def main():
 
                 # Transcription using NEW OpenAI API
                 with open(audio_path, "rb") as f:
-                    transcript = client.audio.transcriptions.create(
+                    transcript = openai_client.audio.transcriptions.create(
                         file=f,
                         model="gpt-4o-transcribe",
                         language="en",
@@ -116,19 +130,28 @@ def main():
                 )
                 full_text = user_text + extra
 
+                # Container for showing agent-by-agent outputs
+                trace_container = st.empty()
+
                 with st.spinner("Generating draft..."):
-                    result = run_email_workflow(full_text)
+                    # Provide a callback to show per-agent outputs
+                    def on_step(agent_name, output):
+                        trace_container.markdown(f"### {agent_name}")
+                        trace_container.json(output)
+
+                    result = run_email_workflow(full_text, on_step=on_step)
                     st.session_state["last_result"] = result
 
-    # ─────────────────────────────────────────────
+                st.success("Draft generated. Trace should appear in LangSmith dashboard.")
+
+    # ---------------------------
     # Draft & Actions Column
-    # ─────────────────────────────────────────────
+    # ---------------------------
     with col2:
         st.subheader("Draft & Actions")
 
         last = st.session_state.get("last_result")
 
-        # Always render inputs (even before generation)
         if last:
             draft = last.get("personalized_draft") or last.get("draft") or {}
             subject = draft.get("subject", "")
@@ -173,9 +196,9 @@ def main():
             upsert_profile("default", prof)
             st.success("Email sent (simulation). Saved to profile history.")
 
-
     st.markdown("---")
     st.markdown("~ Because writing emails manually is a 2010 problem. 😄")
+
 
 if __name__ == "__main__":
     main()
