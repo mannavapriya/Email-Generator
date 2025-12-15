@@ -138,9 +138,23 @@ email_planner = workflow.compile(checkpointer=checkpointer)
 # Run workflow helper
 # ===========================
 def run_email_workflow(user_text: str):
-    """Invoke the email workflow with multi-turn support."""
-    result = email_planner.invoke(
-        {"messages": [HumanMessage(content=user_text)]},
-        config={"configurable": {"thread_id": "email_session_1"}}
-    )
-    return result
+    state = {"messages": [{"content": user_text}], "flow": []}
+    
+    # Agents called in order
+    agents = [
+        ("input_parser_agent", input_parser_agent),
+        ("intent_detection_agent", lambda s: intent_detection_agent(s, llm=make_openai_llm())),
+        ("tone_stylist_agent", tone_stylist_agent),
+        ("draft_writer_agent", lambda s: draft_writer_agent(s, llm=make_openai_llm())),
+        ("personalization_agent", personalization_agent),
+        ("review_agent", lambda s: review_agent(s, llm=make_openai_llm())),
+        ("router_agent", router_agent)
+    ]
+    
+    for name, fn in agents:
+        output = fn(state)
+        state.update(output)
+        state["flow"].append({"agent": name, "output": output})
+    
+    return state
+
