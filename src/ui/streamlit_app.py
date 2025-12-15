@@ -3,15 +3,14 @@ import tempfile
 import streamlit as st
 from memory.json_memory import get_profile, upsert_profile
 from workflow.langgraph_flow import run_email_workflow
-from langchain.callbacks import LangSmithTracer
 from llm_client import make_openai_llm
+
+# Updated LangSmithTracer import for current LangChain
+from langchain_experimental.langsmith import LangSmithTracer
 
 def main():
     st.set_page_config(page_title="Email Generator", layout="wide")
     st.title("Email Generator")
-
-    # Initialize OpenAI LLM via your client
-    llm = make_openai_llm()
 
     # Sidebar: User Profile
     st.sidebar.header("User Profile")
@@ -51,7 +50,7 @@ def main():
             if "voice_text" not in st.session_state:
                 st.session_state["voice_text"] = ""
 
-            import openai  # only for transcription
+            import openai
             audio_file = st.file_uploader("Upload audio", type=["wav", "mp3", "m4a", "mp4"])
             if audio_file:
                 suffix = "." + audio_file.name.split(".")[-1]
@@ -59,8 +58,9 @@ def main():
                     tmp.write(audio_file.read())
                     audio_path = tmp.name
 
+                client = openai.OpenAI()
                 with open(audio_path, "rb") as f:
-                    transcript = openai.OpenAI().audio.transcriptions.create(
+                    transcript = client.audio.transcriptions.create(
                         file=f,
                         model="gpt-4o-transcribe",
                         language="en",
@@ -93,10 +93,13 @@ def main():
                         endpoint=os.environ.get("LANGSMITH_ENDPOINT"),
                         session_name="streamlit_email_generator",
                         capture_span=True,
-                        display=False
+                        display=False,
                     )
 
-                # Run workflow with LLM and optional tracer
+                # Make LLM using your llm_client
+                llm = make_openai_llm()
+
+                # Run workflow
                 result = run_email_workflow(full_text, llm=llm, tracer=tracer)
                 st.session_state["last_result"] = result
 
