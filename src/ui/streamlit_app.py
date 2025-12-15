@@ -4,10 +4,13 @@ import streamlit as st
 from memory.json_memory import get_profile, upsert_profile
 from workflow.langgraph_flow import run_email_workflow
 from integrations.llm_client import make_openai_llm
-
-# Import LangSmithTracer from updated package
-from langchain_experimental.langsmith import LangSmithTracer
 import openai
+
+# Import LangSmith client from old langsmith version
+try:
+    from langsmith import LangSmith
+except ImportError:
+    LangSmith = None
 
 def main():
     st.set_page_config(page_title="Email Generator", layout="wide")
@@ -84,16 +87,13 @@ def main():
                 trace_placeholder = st.empty()
                 spinner_placeholder.info("Generating draft...")
 
-                # Setup LangSmith tracer
+                # Optional LangSmith tracing (only if old langsmith available)
                 tracer = None
-                if os.environ.get("LANGSMITH_TRACING", "").lower() == "true":
-                    tracer = LangSmithTracer(
-                        project_name=os.environ.get("LANGSMITH_PROJECT"),
-                        client_api_key=os.environ.get("LANGSMITH_API_KEY"),
+                if LangSmith and os.environ.get("LANGSMITH_TRACING", "").lower() == "true":
+                    tracer = LangSmith(
+                        api_key=os.environ.get("LANGSMITH_API_KEY"),
+                        project=os.environ.get("LANGSMITH_PROJECT"),
                         endpoint=os.environ.get("LANGSMITH_ENDPOINT"),
-                        session_name="streamlit_email_generator",
-                        capture_span=True,
-                        display=False,
                     )
 
                 # Make LLM
@@ -103,7 +103,7 @@ def main():
                 result = run_email_workflow(full_text, llm=llm, tracer=tracer)
                 st.session_state["last_result"] = result
 
-                # Display trace in Streamlit
+                # Display trace in Streamlit if workflow returns it
                 if result and "flow" in result:
                     for step in result["flow"]:
                         agent_name = step.get("agent", "unknown_agent")
