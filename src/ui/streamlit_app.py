@@ -87,8 +87,11 @@ def main():
                 extra = f"\n\ntone: {tone_choice}" if tone_choice != "(profile)" else ""
                 full_text = user_text + extra
 
-                st.info("Generating draft...")
-
+                # -------------------------
+                # Placeholders
+                # -------------------------
+                spinner_placeholder = st.empty()
+                spinner_placeholder.info("Generating draft...")
                 trace_placeholder = st.empty()
 
                 # Initialize state
@@ -116,16 +119,19 @@ def main():
                     ("router_agent", router_agent),
                 ]
 
-                for name, fn in agents:
+                for i, (name, fn) in enumerate(agents):
                     output = fn(state)
                     state.update(output)
                     state["flow"].append({"agent": name, "output": output})
+
                     # Show only the currently executing agent
                     trace_placeholder.markdown(f"### {name}")
                     trace_placeholder.json(output)
 
+                # Hide spinner when the last agent finishes
+                spinner_placeholder.empty()
                 st.session_state["last_result"] = state
-
+                st.success("Email draft generation complete.")
     # -------------------------
     # Draft & Actions Column
     # -------------------------
