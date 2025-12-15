@@ -37,6 +37,41 @@ The app uses a **multi-agent system** to process user input and generate polishe
 
 ---
 
+## Example Intents
+
+### 1) Professional Follow-Up After a Meeting
+Draft a polished and comprehensive follow-up email to a senior stakeholder after a 45-minute product strategy meeting.
+The email should:
+Thank the recipient for their time and insights
+Summarize the key discussion points and decisions made
+Clearly outline next steps, owners, and tentative timelines
+Be concise but thorough, suitable for an executive audience
+Assume the sender is a product or engineering lead and the recipient expects clarity, accountability, and alignment.
+
+### 2) Assertive Tone : Action Required / Deadline Enforcement
+Generate an email requesting immediate action on an overdue deliverable.
+The email should:
+State the issue and expectation in the opening sentence
+Reference the original deadline and current impact of the delay
+Specify exactly what is required and by when
+Reinforce accountability and urgency without being hostile
+End with a firm call to action and next steps
+Assume the recipient is responsible for the deliverable and resolution is time-sensitive.
+
+### 3) Casual / Friendly: Secret Santa & Christmas Party Invitation
+Write an email inviting my friend to participate in a Secret Santa exchange and attend a Christmas party.
+The email should:
+Open with a warm, informal greeting that reflects a close friendship
+Briefly set the festive context and excitement around the holidays
+Share key details about the Secret Santa (what it is, how it works, and why it will be fun)
+Mention the Christmas party in a relaxed, inviting way, including high-level details (date/time or general plan)
+Encourage her to join without pressure, keeping the tone light and inclusive
+Invite questions or follow-ups if she needs more details
+Close with an upbeat, affectionate, and holiday-spirited sign-off 
+Assume the recipient is a friend, and the goal is to make her feel genuinely included and excited to join.
+
+---
+
 ## Deployment
 
 **Streamlit Cloud:** https://email-generator-agentic-ai.streamlit.app/
