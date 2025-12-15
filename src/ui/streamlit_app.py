@@ -89,29 +89,38 @@ def main():
 
                 st.info("Generating draft...")
 
-                # Placeholder for live trace
                 trace_placeholder = st.empty()
 
-                # Run workflow manually to show live trace
+                # Initialize state
                 state = {"messages": [{"content": full_text}], "flow": []}
-                agents = run_email_workflow.__defaults__[0] if hasattr(run_email_workflow, "__defaults__") else None
 
-                # Using the agents defined inside run_email_workflow
+                # Agents called in order (same as run_email_workflow)
+                from workflow.langgraph_flow import (
+                    input_parser_agent,
+                    intent_detection_agent,
+                    tone_stylist_agent,
+                    draft_writer_agent,
+                    personalization_agent,
+                    review_agent,
+                    router_agent,
+                    make_openai_llm
+                )
+                llm = make_openai_llm()
                 agents = [
-                    ("input_parser_agent", lambda s: run_email_workflow.__globals__["input_parser_agent"](s)),
-                    ("intent_detection_agent", lambda s: run_email_workflow.__globals__["intent_detection_agent"](s, llm=run_email_workflow.__globals__["make_openai_llm"]())),
-                    ("tone_stylist_agent", lambda s: run_email_workflow.__globals__["tone_stylist_agent"](s)),
-                    ("draft_writer_agent", lambda s: run_email_workflow.__globals__["draft_writer_agent"](s, llm=run_email_workflow.__globals__["make_openai_llm"]())),
-                    ("personalization_agent", lambda s: run_email_workflow.__globals__["personalization_agent"](s)),
-                    ("review_agent", lambda s: run_email_workflow.__globals__["review_agent"](s, llm=run_email_workflow.__globals__["make_openai_llm"]())),
-                    ("router_agent", lambda s: run_email_workflow.__globals__["router_agent"](s))
+                    ("input_parser_agent", input_parser_agent),
+                    ("intent_detection_agent", lambda s: intent_detection_agent(s, llm)),
+                    ("tone_stylist_agent", tone_stylist_agent),
+                    ("draft_writer_agent", lambda s: draft_writer_agent(s, llm)),
+                    ("personalization_agent", personalization_agent),
+                    ("review_agent", lambda s: review_agent(s, llm)),
+                    ("router_agent", router_agent),
                 ]
 
                 for name, fn in agents:
                     output = fn(state)
                     state.update(output)
                     state["flow"].append({"agent": name, "output": output})
-                    # Update only the current agent
+                    # Show only the currently executing agent
                     trace_placeholder.markdown(f"### {name}")
                     trace_placeholder.json(output)
 
