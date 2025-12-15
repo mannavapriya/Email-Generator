@@ -5,8 +5,9 @@ from memory.json_memory import get_profile, upsert_profile
 from workflow.langgraph_flow import run_email_workflow
 from integrations.llm_client import make_openai_llm
 
-# Updated LangSmithTracer import for current LangChain
+# Import LangSmithTracer from updated package
 from langchain_experimental.langsmith import LangSmithTracer
+import openai
 
 def main():
     st.set_page_config(page_title="Email Generator", layout="wide")
@@ -46,11 +47,10 @@ def main():
                 height=200,
             )
         else:
-            st.info("Upload an audio file (WAV, MP3, M4A, MP4) with email intent. Transcribed with Whisper.")
+            st.info("Upload an audio file (WAV, MP3, M4A, MP4). Transcribed with Whisper.")
             if "voice_text" not in st.session_state:
                 st.session_state["voice_text"] = ""
 
-            import openai
             audio_file = st.file_uploader("Upload audio", type=["wav", "mp3", "m4a", "mp4"])
             if audio_file:
                 suffix = "." + audio_file.name.split(".")[-1]
@@ -84,7 +84,7 @@ def main():
                 trace_placeholder = st.empty()
                 spinner_placeholder.info("Generating draft...")
 
-                # Setup LangSmith tracer if enabled
+                # Setup LangSmith tracer
                 tracer = None
                 if os.environ.get("LANGSMITH_TRACING", "").lower() == "true":
                     tracer = LangSmithTracer(
@@ -96,7 +96,7 @@ def main():
                         display=False,
                     )
 
-                # Make LLM using your llm_client
+                # Make LLM
                 llm = make_openai_llm()
 
                 # Run workflow
