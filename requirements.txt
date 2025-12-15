@@ -17,4 +17,5 @@ python-dotenv
 requests
 httpx
 pydantic
+langsmith==0.4.59
 rich>=10.14.0,<14

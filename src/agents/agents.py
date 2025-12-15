@@ -6,6 +6,7 @@ import json, re
 from pathlib import Path
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langsmith import traceable
 
 # Load tone samples
 TONE_SAMPLES_PATH = Path(__file__).parent.parent.parent / "data" / "tone_samples.json"
@@ -15,6 +16,7 @@ with open(TONE_SAMPLES_PATH, "r", encoding="utf-8") as f:
 # Default sender name
 DEFAULT_SENDER_NAME = "Manasa"
 
+@traceable(run_type="llm")
 def input_parser_agent(state: Dict[str, Any]) -> Dict[str, Any]:
     messages = state.get("messages", [])
     if not messages:
@@ -45,6 +47,7 @@ def input_parser_agent(state: Dict[str, Any]) -> Dict[str, Any]:
     }
     return {"parsed": parsed}
 
+@traceable(run_type="llm")
 def intent_detection_agent(state: Dict[str, Any], llm) -> Dict[str, Any]:
     parsed = state.get("parsed", {})
     prompt = parsed.get("prompt_text", "")
@@ -64,6 +67,7 @@ def intent_detection_agent(state: Dict[str, Any], llm) -> Dict[str, Any]:
         decision = "other"
     return {"intent": decision}
 
+@traceable(run_type="llm")
 def tone_stylist_agent(state: Dict[str, Any]) -> Dict[str, Any]:
     parsed = state.get("parsed") or {}
     prefer = parsed.get("preferred_tone") or state.get("user_profile", {}).get("preferred_tone", "formal")
@@ -81,6 +85,7 @@ def tone_stylist_agent(state: Dict[str, Any]) -> Dict[str, Any]:
     
     return {"tone": tone, "tone_instructions": tone_instructions}
 
+@traceable(run_type="llm")
 def draft_writer_agent(state: Dict[str, Any], llm, max_output_tokens: int = 512) -> Dict[str, Any]:
     parsed = state.get("parsed", {})
     intent = state.get("intent", "other")
@@ -125,6 +130,7 @@ def draft_writer_agent(state: Dict[str, Any], llm, max_output_tokens: int = 512)
         subject = (parsed.get("prompt_text", "")[:60] + "...") if parsed.get("prompt_text") else "New Email"
     return {"draft": {"subject": subject.strip(), "body": body.strip()}}
 
+@traceable(run_type="llm")
 def personalization_agent(state: Dict[str, Any]) -> Dict[str, Any]:
     draft = state.get("draft", {})
     profile = state.get("user_profile", {})
@@ -161,6 +167,7 @@ def personalization_agent(state: Dict[str, Any]) -> Dict[str, Any]:
 
     return {"personalized_draft": {"subject": subject.strip(), "body": body.strip()}}
 
+@traceable(run_type="llm")
 def review_agent(state: Dict[str, Any], llm) -> Dict[str, Any]:
     draft = state.get("personalized_draft", {})
     tone = state.get("tone", "formal")
@@ -183,6 +190,7 @@ def review_agent(state: Dict[str, Any], llm) -> Dict[str, Any]:
         parsed = {"ok": True, "issues": [], "suggested_edits": draft.get("body", "")}
     return {"review": parsed}
 
+@traceable(run_type="llm")
 def router_agent(state):
     review = state.get("review", {})
     retry_count = state.get("retry_count", 0)
