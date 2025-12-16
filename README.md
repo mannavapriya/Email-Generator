@@ -84,6 +84,12 @@ Can be found under src\example_voice_intents folder
 
 ---
 
+## Demo
+
+[![Watch the video](https://img.youtube.com/vi/LRxX8wusdiI/0.jpg)](https://youtu.be/LRxX8wusdiI)
+
+---
+
 ## Architecture
 
 <img width="1900" height="1460" alt="email_generator_arc_diagram" src="https://github.com/user-attachments/assets/8dc8e378-5310-444a-b300-e794536972ec" />
