@@ -37,7 +37,7 @@ The app uses a **multi-agent system** to process user input and generate polishe
 
 ---
 
-## Example Intents
+## Example Text Intents
 
 ### 1) Professional Follow-Up After a Meeting
 Draft a polished and comprehensive follow-up email to a senior stakeholder after a 45-minute product strategy meeting.
@@ -69,6 +69,12 @@ Encourage her to join without pressure, keeping the tone light and inclusive
 Invite questions or follow-ups if she needs more details
 Close with an upbeat, affectionate, and holiday-spirited sign-off 
 Assume the recipient is a friend, and the goal is to make her feel genuinely included and excited to join.
+
+---
+
+## Example Voice Intents
+
+Can be found under src\example_voice_intents folder 
 
 ---
 
