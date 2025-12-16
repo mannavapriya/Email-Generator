@@ -93,15 +93,39 @@ Can be found under src\example_voice_intents folder
 ## Project Structure
 
 ```text
-email_assistant/
-├── streamlit_app.py        # Streamlit Cloud entrypoint
-├── requirements.txt        # Python dependencies
-├── runtime.txt 
+Email-Generator/
+├── streamlit_app.py               # Streamlit Cloud entrypoint (thin UI bootstrap)
+├── requirements.txt               # Python dependencies
+├── README.md                      # Architecture, setup, and usage details
+│
 ├── src/
-│   ├── ui/                 # Streamlit UI
-│   ├── agents/             # Modular agent code
-│   ├── workflow/           # LangGraph workflow
-│   └── integrations/       # API clients
-├── memory/                 # User profile JSON
-├── data/                   # Tone samples
-└── config/                 # MCP routing config
+│   ├── ui/
+│   │   ├── streamlit_app.py       # UI components, forms, preview, export
+│   │
+│   ├── agents/
+│   │   ├── agents.py              # input parsing, intent detection, tone stylist, draft writer, personalization, review & routing agents
+│   │
+│   ├── example_voice_inputs/
+│   │   ├── assertive.m4a          # assertive, friendly, profesional voice input files
+│   │   ├── friendly.m4a
+│   │   ├── professioanl.m4a
+|   |
+│   ├── workflow/
+│   │   └── langgraph_flow.py      # LangGraph StateGraph orchestration
+│   │
+│   ├── memory/
+│   │   ├── __init__.py
+│   │   ├── json_memory.py           
+│   │   ├── user_profiles.json 
+│   │
+│   ├── integrations/
+│   │   ├── llm_client.py          # OpenAI LLM
+│   │
+│   ├── runtime.txt                #python version
+|
+├── data/
+│   └── tone_samples.json
+│
+
+
+
