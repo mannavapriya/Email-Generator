@@ -86,7 +86,7 @@ Can be found under src\example_voice_intents folder
 
 ## Demo
 
-[![Watch the video](https://img.youtube.com/vi/LRxX8wusdiI/0.jpg)](https://youtu.be/LRxX8wusdiI)
+[Click to watch the demo](https://youtu.be/LRxX8wusdiI)
 
 ---
 
